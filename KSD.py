@@ -178,7 +178,7 @@ fig, ax = plt.subplots(1, 1)
 # sample_x=sample_gaussian_2 = np.random.normal(8, 0.8,10)
 sample_x=np.array([8.08257846,8.67351958,8.02216486,7.34998792,7.91735729,
                     7.14284675,8.63422246,8.53355953,8.41559643,8.09294256])
-sample_y=sample_gaussian_2 = np.random.normal(2,0.1,10)
+# sample_y=sample_gaussian_2 = np.random.normal(2,0.1,10)
 sample_y=np.array([2.19935738,2.09367552,2.11424323,1.89081297,1.88932488,1.96945423,2.03788283,
                    1.97891364,2.04268127,1.94649662])
 
@@ -196,8 +196,8 @@ def gaussian_scipy_pdf_P(x):
     def _pdf(x):
         return norm.pdf(x, 0, 2)
     return _pdf#cannot print out
-print(norm.pdf(sample_x))
-print(derivative(norm.pdf,sample_x,dx=1))
+# print(norm.pdf(sample_x))
+# print(derivative(norm.pdf,sample_x,dx=1))
 
 # def f(x):
 #     return x**5
@@ -208,6 +208,7 @@ def gaussian_scipy_pdf_Q(x):
     return _pdf
 
 def pdf_derivative_P(x):
+    # print(derivative(norm.pdf,sample_x,dx=1))
     return derivative(norm.pdf,sample_x,dx=1)
 
 def pdf_derivative_Q(x):
@@ -221,7 +222,7 @@ sigma=2
 def f(x,x_prime):
     return np.exp(-(np.sum((x - x_prime) ** 2)) / (2 * sigma ** 2))
 x,x_prime=symbols('x,x_prime',real=True)
-print(diff(f(x,x_prime),x))
+# print(diff(f(x,x_prime),x))
 
 
 def RBF_gaussian_kernel_der_x():
@@ -232,14 +233,41 @@ def RBF_gaussian_kernel_der_x_prime():
 def trace_der_x_x_prime():
     return
 
-def RBF_gaussian_kernel_der_x_prime():
-    return
 
-def stain_operator_P(x):
-    score_function=pdf_derivative_P(x)
+def RBF_kernel(sample_x, sample_y,sigma):
+    kernel = np.exp(-(np.sum((sample_x - sample_y) ** 2)) / (2 * sigma ** 2))
+    return kernel
+
+
+def RBF_kernel_derivative_x(sample_x,sample_y,sigma):
+     e=np.exp(-(np.sum((sample_x - sample_y) ** 2)) / (2 * sigma ** 2))
+     d=-(2 *sample_x - 2 * sample_y)/ (2 * sigma ** 2)
+     return e*d
+
+
+def RBF_kernel_derivative_y(sample_x, sample_y, sigma):
+    e = np.exp(-(np.sum((sample_x - sample_y) ** 2)) / (2 * sigma ** 2))
+    d = -(- 2 * sample_y+2*sample_y) / (2 * sigma ** 2)
+    return e * d
+
+def RBF_kernel_derivative_x_y(sample_x, sample_y, sigma):
+    e = np.exp(-(np.sum((sample_x - sample_y) ** 2)) / (2 * sigma ** 2))
+    d = -(2 * sample_x - 2 * sample_y) / (2 * sigma ** 2)
+    return e * d
+
+
+print(norm.pdf(sample_x))
+print(derivative(norm.pdf,sample_x,dx=1))
+
+def stain_operator(x):
+    score_function=pdf_derivative_P(x)/norm.pdf(sample_x)
+    print(score_function)
     return
-def stain_operator_Q(x):
-    score_function = pdf_derivative_Q(x)
+stain_operator(sample_x)
+stain_operator(sample_y)
+
+
+
 
 def KSD(x):
 
