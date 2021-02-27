@@ -76,7 +76,7 @@ plt.show()
 # sample_x1=np.array([[0,1],[1,2],[2,3],[3,4],[4,5]])#x1.x2.x3.x4.x5\
 # sample_y1=np.array([[1],[-1],[1],[1],[-1]])
 # sample_y0=np.array([1,-1,1])
-
+sample=np.array([[[0,1],[0,1]],[[1,2],[1,2]]])
 sample_x=np.array([[0,1],[1,2],[2,3]])
 sample_x_prime=np.array([0,1,2,3])
 sample_y=np.array([[1],[-1],[1]])
@@ -84,11 +84,11 @@ sample_y=np.array([[1],[-1],[1]])
 sample_y_trans=np.transpose(sample_y)
 
 yy_prime=np.matmul(sample_y,sample_y_trans)
-print("yy")
-print(yy_prime)
+# print("yy")
+# print(yy_prime)
 yy_f=LA.norm(np.inner(yy_prime,yy_prime))
-print("yy_f")
-print(yy_f)
+# print("yy_f")
+# print(yy_f)
 
 
 def linear_kenel(matrix):
@@ -97,9 +97,10 @@ def linear_kenel(matrix):
     print(matrix_tran)
     kernel_matrix=np.matmul(matrix,matrix_tran)
     print(kernel_matrix)
-    print(sk.metrics.pairwise.linear_kernel(matrix))
+    # print(sk.metrics.pairwise.linear_kernel(matrix))
     return kernel_matrix
-# linear_kenel([[0,1],[1,2]])
+print("linear kernel")
+linear_kenel(sample_x)
 # linear_kenel(sample_y)
 # linear_kenel(sample_x_prime)
 
@@ -123,7 +124,7 @@ def kernel_alignment_linear():
     alignment = LA.norm(inner_kyy)/ (m * np.sqrt(LA.norm(inner_kk)))
     print(alignment)
     return alignment
-kernel_alignment_linear()
+# kernel_alignment_linear()
 
 def kernel_alignment_sigmoid():
     m = sample_x.shape[0]
@@ -145,9 +146,40 @@ def kernel_alignment_sigmoid():
 # kernel_alignment_sigmoid()
 
 
+###################################Gaussian Kernel Matrix##############
+def GaussianMatrix(X,sigma):
+    row,col=X.shape
+    GassMatrix=np.zeros(shape=(row,row))
+    X=np.asarray(X)
+    i=0
+    for v_i in X:
+        j=0
+        for v_j in X:
+            GassMatrix[i,j]=Gaussian(v_i.T,v_j.T,sigma)
+            # print(GassMatrix)
+            j+=1
+        i+=1
+    print(GassMatrix)
+    return GassMatrix
+def Gaussian(x,z,sigma):
+    return np.exp((-(np.linalg.norm(x-z)**2))/(2*sigma**2))
+GaussianMatrix(sample_x,0.5)
+###########################################################################
+
+
+
+
 def optimization():
     print("linear")
-    k1=sk.metrics.pairwise.pairwise_kernels(sample_x,sample_x,metric='linear')
+    # k1=sk.metrics.pairwise.pairwise_kernels(sample,sample,metric='linear')
+    # print(k1)
+    kk=linear_kenel(sample)
+    print(kk)
+    for e in kk:
+        print(e)
+        print("eigenvec")
+        eigen = la.eig(e)
+        print(eigen[1])
     print("sigmoid")
     k2=sk.metrics.pairwise.sigmoid_kernel(sample_x,coef0=1)
     k1_alignment=kernel_alignment_linear()
@@ -169,15 +201,26 @@ def optimization():
     print(vv_prime_1)
     print(vv_prime_2)
     print(yy_prime)
-    aligenment_1=LA.norm(np.inner(yy_prime,yy_prime))
-    aligenment_2 = LA.norm(np.inner(vv_prime_2,yy_prime))
-    a_1=aligenment_1+aligenment_2
-    a=np.sqrt(a_1)/m
-    print("allignemtn")
+    aligenment_1=np.square(LA.norm(np.inner(vv_prime_1,yy_prime)))
+    aligenment_2= np.square(LA.norm(np.inner(vv_prime_2,yy_prime)))
+
+    lambda1=1
+    F_1=aligenment_1
+    F_2=aligenment_2
+    alfa_1=F_1/(2*lambda1)
+    alfa_2=F_2/(2*lambda1)
+    print("allignement")
     print(aligenment_1)
     print(aligenment_2)
-    print(a)
+    print(alfa_1)
     # w_a=np.square(LA.norm(np.inner(k1_eigenvec,sample_y)))
     # print(w_a)
+    print("代入公式")
+    A_hat_1=((alfa_1*aligenment_1)+(alfa_2*aligenment_2))\
+            /(np.square(yy_f)*(np.square(alfa_1)+np.square(alfa_2)))
+    print(A_hat_1)
+    print("简写")
+    A_hat_2= np.sqrt(np.square(aligenment_1)+np.square(aligenment_2)) / len(sample_y)
+    print(A_hat_2)
     return
 optimization()

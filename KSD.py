@@ -11,7 +11,7 @@ from scipy.misc import derivative
 import math
 from scipy.stats import norm
 import matplotlib.pyplot as plt
-
+from numpy import linalg as LA
 from sympy import *
 
 #####################Generate Data####################################
@@ -50,15 +50,16 @@ def get_same_data():
     sigma = 0.15  # 将输出数据限制到0-1之间
     same_1 = []
     for i in range(10):
-        same_1.append([random.lognormvariate(mu, sigma) for _ in range(1, 500)])
+        same_1.append([random.lognormvariate(mu, sigma) for _ in range(1, 50)])
     same_2 = []
     for i in range(10):
-        same_2.append([random.lognormvariate(mu, sigma) for _ in range(1, 500)])
+        same_2.append([random.lognormvariate(mu, sigma) for _ in range(1, 50)])
     X = torch.Tensor(same_1)
     Y = torch.Tensor(same_2)
-    X, Y = Variable(X), Variable(Y)
     # print(len(X))
-    # print(len(Y[1]))
+    X, Y = Variable(X), Variable(Y)
+    print(len(X))#10
+    print(len(Y[1]))#499
     return X,Y
 
 get_same_data()
@@ -97,7 +98,8 @@ def linear_kenel(matrix):
 
 def guassian_kernel(source, target, kernel_mul=2.0, kernel_num=5, fix_sigma=None):
     n_samples = int(source.size()[0]) + int(target.size()[0])
-    print(n_samples)
+    print("n_sample=20")
+    # print(n_samples)
     # 求矩阵的行数，即两个域的的样本总数，一般source和target的尺度是一样的，这样便于计算
     total = torch.cat([source, target], dim=0)  # 将source,target按列方向合并
     # 将total复制（n+m）份
@@ -131,6 +133,7 @@ def guassian_kernel(source, target, kernel_mul=2.0, kernel_num=5, fix_sigma=None
     # 高斯核函数的数学表达式
     kernel_val = [torch.exp(-L2_distance_square / bandwidth_temp) for bandwidth_temp in bandwidth_list]
     # 得到最终的核矩阵
+    print(sum(kernel_val))
     return sum(kernel_val)  # /len(kernel_val)
 # X,Y=get_same_data()
 # guassian_kernel(X,Y)
@@ -175,13 +178,21 @@ def MMD_RHKS(source,target,kernel_mul=2.0, kernel_num=5, fix_sigma=None):
 
 ##############################KSD#################################
 fig, ax = plt.subplots(1, 1)
-# sample_x=sample_gaussian_2 = np.random.normal(8, 0.8,10)
-sample_x=np.array([8.08257846,8.67351958,8.02216486,7.34998792,7.91735729,
-                    7.14284675,8.63422246,8.53355953,8.41559643,8.09294256])
-# sample_y=sample_gaussian_2 = np.random.normal(2,0.1,10)
-sample_y=np.array([2.19935738,2.09367552,2.11424323,1.89081297,1.88932488,1.96945423,2.03788283,
-                   1.97891364,2.04268127,1.94649662])
+sample_x_1=sample_gaussian_2 = np.random.normal(8, 0.8,100)
+sample_x_2=sample_gaussian_2 = np.random.normal(8, 0.8,100)
+# sample_x=np.array([8.08257846,8.67351958,8.02216486,7.34998792,7.91735729,
+#                     7.14284675,8.63422246,8.53355953,8.41559643,8.09294256])
+sample_y=sample_gaussian_2 = np.random.normal(2,0.1,100)
+# sample_y=np.array([2.19935738,2.09367552,2.11424323,1.89081297,1.88932488,1.96945423,2.03788283,
+#                    1.97891364,2.04268127,1.94649662])
 
+
+# print("x1")
+# print(sample_x_1)
+# print("x2")
+# print(sample_x_2)
+# print("y")
+# print(sample_y)
 
 def gaussian_pdf(x,mu,sigma):
     return np.exp(-(x - mu) ** 2 / (2 * sigma ** 2)) / (math.sqrt(2 * math.pi) * sigma)
@@ -189,7 +200,7 @@ def gaussian_pdf(x,mu,sigma):
 def gaissian_1d(x,sigma):
     return np.exp(-x ** 2 / (2 * sigma ** 2)) / (math.sqrt(2 * math.pi) * sigma)
 
-def gaissian_2d(x,y,mu,sigma):
+def gaissian_2d(x,y,sigma):
     return np.exp(-(x** 2+y**2) / (2 * sigma ** 2)) / (math.sqrt(2 * math.pi) * sigma)
 
 def gaussian_scipy_pdf_P(x):
@@ -209,18 +220,26 @@ def gaussian_scipy_pdf_Q(x):
 
 def pdf_derivative_P(x):
     # print(derivative(norm.pdf,sample_x,dx=1))
-    return derivative(norm.pdf,sample_x,dx=1)
-
-def pdf_derivative_Q(x):
-    return derivative(norm.pdf,sample_y,dx=1)
+    return derivative(norm.pdf,x,dx=1)
+X1,Y1=get_same_data()
+X2,Y2=get_diff_data()
+print("x1")
+print(X1)
+print(Y1)
+# print(len(X1[1]))#[10,499]
+print("Y2")
+print(X2)
+print(Y2)
 
 def RBF_gaussian_kernel(x, x_prime, sigma):
-    return np.exp(-(np.sum((x - x_prime) ** 2)) / (2 * sigma ** 2))
-
+    print("RBF_gaussian_kernel")
+    print(np.exp(-(LA.norm((x - x_prime))) / (2 * sigma ** 2)))
+    return np.exp(-(LA.norm((x - x_prime))) / (2 * sigma ** 2))
+RBF_gaussian_kernel(X1,Y1,0.8)
 
 sigma=2
-def f(x,x_prime):
-    return np.exp(-(np.sum((x - x_prime) ** 2)) / (2 * sigma ** 2))
+# def f(x,x_prime):
+#     return np.exp(-(np.sum((x - x_prime) ** 2)) / (2 * sigma ** 2))
 x,x_prime=symbols('x,x_prime',real=True)
 # print(diff(f(x,x_prime),x))
 
@@ -230,49 +249,96 @@ def RBF_gaussian_kernel_der_x():
 def RBF_gaussian_kernel_der_x_prime():
     return diff(x,x_prime)
 
-def trace_der_x_x_prime():
-    return
-
-
 def RBF_kernel(sample_x, sample_y,sigma):
-    kernel = np.exp(-(np.sum((sample_x - sample_y) ** 2)) / (2 * sigma ** 2))
+    print("RBF kernel")
+    kernel = np.exp(-(LA.norm((sample_x - sample_y) ** 2)) / (2 * sigma ** 2))
+    print(kernel)
     return kernel
-
+RBF_kernel(X1,Y1,0.8)
 
 def RBF_kernel_derivative_x(sample_x,sample_y,sigma):
-     e=np.exp(-(np.sum((sample_x - sample_y) ** 2)) / (2 * sigma ** 2))
+     e=np.exp(-(LA.norm((sample_x - sample_y) ** 2)) / (2 * sigma ** 2))
      d=-(2 *sample_x - 2 * sample_y)/ (2 * sigma ** 2)
      return e*d
 
 
 def RBF_kernel_derivative_y(sample_x, sample_y, sigma):
-    e = np.exp(-(np.sum((sample_x - sample_y) ** 2)) / (2 * sigma ** 2))
+    e = np.exp(-(LA.norm((sample_x - sample_y) ** 2)) / (2 * sigma ** 2))
     d = -(- 2 * sample_y+2*sample_y) / (2 * sigma ** 2)
-    return e * d
+    x_d=e * d
+    return x_d
 
 def RBF_kernel_derivative_x_y(sample_x, sample_y, sigma):
-    e = np.exp(-(np.sum((sample_x - sample_y) ** 2)) / (2 * sigma ** 2))
+    e = np.exp(-(LA.norm((sample_x - sample_y) ** 2)) / (2 * sigma ** 2))
     d = -(2 * sample_x - 2 * sample_y) / (2 * sigma ** 2)
-    return e * d
+    x_d=e * d
+    y_d=e*d*((- 2 * sample_y) / (2 * sigma ** 2))
+    return y_d
 
 
-print(norm.pdf(sample_x))
-print(derivative(norm.pdf,sample_x,dx=1))
+# print(norm.pdf(sample_x))
+# print(derivative(norm.pdf,sample_x,dx=1))
 
 def stain_operator(x):
-    score_function=pdf_derivative_P(x)/norm.pdf(sample_x)
+    score_function=derivative(norm.pdf,x,dx=1)/norm.pdf(x)
+    print("stain_operato")
     print(score_function)
+    return score_function
+stain_operator(X1)
+# stain_operator(sample_y)
+
+def shuffle_x(x):
+    x=np.random.shuffle(x)
+    return x
+
+def generate_U_xy():
+    U_xy=np.random.multinomial(100, [1/10.]*10, size=10)
+    print("U_XY")
+    print(U_xy)
+    return U_xy
+generate_U_xy()
+
+
+
+def U_q(x,x_prime):
+    print("uq")
+    f1=np.transpose(stain_operator(x))*RBF_kernel(x,x_prime,sigma=0.8)*stain_operator(x_prime)
+    #operands could not be broadcast together with shapes (49,10) (10,49)
+    f2=np.transpose(stain_operator(x))*RBF_kernel_derivative_y(x,x_prime,sigma=0.8)
+    f3=np.transpose(RBF_kernel_derivative_y(x,x_prime,sigma=0.8))*stain_operator(x_prime)
+    f4=np.trace(RBF_kernel_derivative_x_y(x,x_prime,sigma=0.8))#at least 2dim matrix
+    u_q=f1+f2+f3+f4
+    print(u_q)
+    return u_q
+U_q(X1,Y1)
+
+def S_u_hat(X):
+    n=len(X)
+    f1=1/(n(n-1))
+    X_prime=np.shuffle(X)
+    sum=np.array();
+    for i in X:
+        for j in X_prime:
+            if i!=j:
+                U_q=U_q(i,j)#u_q里面每一个值，这个思路可行吗？
+        sum=sum+U_q
+    return sum
+
+def generate_weight():
+    x=1
     return
-stain_operator(sample_x)
-stain_operator(sample_y)
+
+def S_u_hat_star(X):
+    n=len(X)
+    return
 
 
 
 
-def KSD(x):
+def get_U_XY():
 
-    U_q_1=1
-    U_q_2=1
-    U_q_3=1
-    U_q_4=1
-    return U_q_1+U_q_2+U_q_3+U_q_4
+    return
+def Bootstrap_Test(x):
+
+
+    return
